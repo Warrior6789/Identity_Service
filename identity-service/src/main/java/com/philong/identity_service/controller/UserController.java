@@ -5,9 +5,11 @@ import com.philong.identity_service.request.UserCreationRequest;
 import com.philong.identity_service.request.UserUpdateRequest;
 import com.philong.identity_service.response.ApiResponse;
 import com.philong.identity_service.response.UserResponse;
-import com.philong.identity_service.service.user.UserService;
+import com.philong.identity_service.service.UserService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
@@ -19,9 +21,11 @@ import java.util.List;
 @RequestMapping("/api/v1/user")
 @SecurityRequirement(name = "bearerAuth")
 @RequiredArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
+
 public class UserController {
 
-    private final UserService userService;
+    UserService userService;
 
     @GetMapping
     private ApiResponse<List<UserResponse>> getAllUser(){

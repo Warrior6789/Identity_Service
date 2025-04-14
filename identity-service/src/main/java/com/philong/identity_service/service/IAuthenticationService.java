@@ -1,4 +1,4 @@
-package com.philong.identity_service.service.user;
+package com.philong.identity_service.service;
 
 import com.nimbusds.jose.JOSEException;
 import com.philong.identity_service.request.AuthenticationRequest;

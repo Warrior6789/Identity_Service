@@ -1,6 +1,5 @@
-package com.philong.identity_service.service.user;
+package com.philong.identity_service.service;
 
-import com.philong.identity_service.entity.User;
 import com.philong.identity_service.request.UserCreationRequest;
 import com.philong.identity_service.request.UserUpdateRequest;
 import com.philong.identity_service.response.UserResponse;

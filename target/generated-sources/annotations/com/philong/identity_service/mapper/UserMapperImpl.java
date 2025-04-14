@@ -1,8 +1,11 @@
 package com.philong.identity_service.mapper;
 
+import com.philong.identity_service.entity.Permission;
+import com.philong.identity_service.entity.Role;
 import com.philong.identity_service.entity.User;
 import com.philong.identity_service.request.UserCreationRequest;
 import com.philong.identity_service.request.UserUpdateRequest;
+import com.philong.identity_service.response.RoleResponse;
 import com.philong.identity_service.response.UserResponse;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -13,7 +16,7 @@ import org.springframework.stereotype.Component;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2025-04-13T14:45:29+0700",
+    date = "2025-04-14T17:24:32+0700",
     comments = "version: 1.6.3, compiler: javac, environment: Java 17.0.12 (Oracle Corporation)"
 )
 @Component
@@ -51,10 +54,7 @@ public class UserMapperImpl implements UserMapper {
         userResponse.last_name( user.getLast_name() );
         userResponse.dob( user.getDob() );
         userResponse.email( user.getEmail() );
-        Set<String> set = user.getRole();
-        if ( set != null ) {
-            userResponse.role( new LinkedHashSet<String>( set ) );
-        }
+        userResponse.roles( roleSetToRoleResponseSet( user.getRoles() ) );
 
         return userResponse.build();
     }
@@ -84,5 +84,35 @@ public class UserMapperImpl implements UserMapper {
         user.setLast_name( request.getLast_name() );
         user.setDob( request.getDob() );
         user.setEmail( request.getEmail() );
+    }
+
+    protected RoleResponse roleToRoleResponse(Role role) {
+        if ( role == null ) {
+            return null;
+        }
+
+        RoleResponse.RoleResponseBuilder roleResponse = RoleResponse.builder();
+
+        roleResponse.name( role.getName() );
+        roleResponse.description( role.getDescription() );
+        Set<Permission> set = role.getPermissions();
+        if ( set != null ) {
+            roleResponse.permissions( new LinkedHashSet<Permission>( set ) );
+        }
+
+        return roleResponse.build();
+    }
+
+    protected Set<RoleResponse> roleSetToRoleResponseSet(Set<Role> set) {
+        if ( set == null ) {
+            return null;
+        }
+
+        Set<RoleResponse> set1 = new LinkedHashSet<RoleResponse>( Math.max( (int) ( set.size() / .75f ) + 1, 16 ) );
+        for ( Role role : set ) {
+            set1.add( roleToRoleResponse( role ) );
+        }
+
+        return set1;
     }
 }

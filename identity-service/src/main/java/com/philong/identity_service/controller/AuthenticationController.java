@@ -6,7 +6,7 @@ import com.philong.identity_service.request.IntrospectRequest;
 import com.philong.identity_service.response.ApiResponse;
 import com.philong.identity_service.response.AuthenticationResponse;
 import com.philong.identity_service.response.IntrospectResponse;
-import com.philong.identity_service.service.user.AuthenticationService;
+import com.philong.identity_service.service.AuthenticationService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -21,8 +21,8 @@ import java.text.ParseException;
 @Slf4j
 @RestController
 @RequestMapping("/api/v1/auth")
-@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @RequiredArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class AuthenticationController {
     AuthenticationService authenticationService;
 

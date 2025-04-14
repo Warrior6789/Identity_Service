@@ -1,4 +1,4 @@
-package com.philong.identity_service.service.user;
+package com.philong.identity_service.service;
 
 import com.nimbusds.jose.*;
 import com.nimbusds.jose.crypto.MACSigner;
@@ -104,9 +104,18 @@ public class AuthenticationService implements IAuthenticationService {
 
     private String buildScope(User user){
         StringJoiner builder = new StringJoiner(" ");
-        if(!CollectionUtils.isEmpty(user.getRole())){
-            user.getRole().forEach(builder::add);
+        if(!CollectionUtils.isEmpty(user.getRoles())){
+            user.getRoles().forEach(role ->
+                    {
+                       builder.add("ROLE_"+role.getName());
+                       if(!CollectionUtils.isEmpty(role.getPermissions())){
+                           role.getPermissions().forEach(permission -> builder.add(permission.getName()));
+                       }
+                    }
+            );
+
         }
+        log.warn(builder.toString());
         return builder.toString();
     }
 }

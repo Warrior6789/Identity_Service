@@ -1,12 +1,14 @@
 package com.philong.identity_service.exception;
 
 import com.philong.identity_service.response.ApiResponse;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
 
+@Slf4j
 @ControllerAdvice
 public class HandlerException {
 
@@ -31,6 +33,7 @@ public class HandlerException {
 
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<ApiResponse> handleRuntimeException(RuntimeException e) {
+        log.error("RuntimeException", e);
         ApiResponse response = new ApiResponse();
         response.setMessage(Error.UNCATEGORIZED.getMessage());
         response.setCode(Error.UNCATEGORIZED.getCode());
