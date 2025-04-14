@@ -1,0 +1,80 @@
+# Compiled class file
+*.class
+
+# Log file
+*.log
+
+# Package Files #
+*.jar
+*.war
+*.ear
+
+# Spring Boot DevTools restart
+.spring-boot-devtools.properties
+.spring-boot-devtools.restart.trigger
+
+# IntelliJ IDEA related files
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# Maven related files
+target/
+pom.xml.backup
+*.iml.backup
+
+# Keystore files (chứa thông tin nhạy cảm)
+*.jks
+*.keystore
+*.p12
+*.pkcs12
+
+# Environment specific files (có thể chứa cấu hình nhạy cảm)
+.env
+*.properties.local
+*.yml.local
+*.properties.dev
+*.yml.dev
+*.properties.prod
+*.yml.prod
+*.properties.test
+*.yml.test
+application-local.properties
+application-local.yml
+application-dev.properties
+application-dev.yml
+application-prod.properties
+application-prod.yml
+application-test.properties
+application-test.yml
+
+# Temporary files and directories
+tmp/
+temp/
+buildcache/
+.DS_Store # macOS specific
+
+# OS specific files (Windows)
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Other build system or tool specific files (nếu có)
+node_modules/
+yarn-error.log
+package-lock.json
+
+# Caché của trình biên dịch Kotlin (nếu dùng Kotlin)
+.kotlin/
+
+# Caché của Annotation Processing
+.apt_generated/
+.annotationProcessors/
+
+# Các file backup hoặc temporary khác do IDE hoặc hệ điều hành tạo ra
+*~
+\#*\#
+*.swp
+*.swo
+*.vrb
