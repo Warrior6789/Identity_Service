@@ -1,6 +1,6 @@
 package com.philong.identity_service.config;
 
-import com.philong.identity_service.enums.Role;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -22,10 +22,13 @@ import javax.crypto.spec.SecretKeySpec;
 @Configuration
 @EnableMethodSecurity
 public class SecurityConfig {
-    @Value("${security.jwt.signkey}")
-    private String signKey;
+
+    @Autowired
+    private CustomJwtDecoder jwtDecoder;
+
     private final String[] PUBLIC_ENDPOINTS = {
             "/api/v1/auth/log-in",
+            "/api/v1/auth/logout",
             "/api/v1/auth/introspect",
 
     };
@@ -39,20 +42,14 @@ public class SecurityConfig {
         });
         httpSecurity.csrf(AbstractHttpConfigurer::disable);
         httpSecurity.oauth2ResourceServer(oauth2 -> {
-            oauth2.jwt(jwtConfigurer -> jwtConfigurer.decoder(jwtDecoder())
+            oauth2.jwt(jwtConfigurer -> jwtConfigurer.decoder(jwtDecoder)
                     .jwtAuthenticationConverter(jwtAuthenticationConverter()))
                     .authenticationEntryPoint(new JwtAuthenticationEntryPoint());
         });
         return httpSecurity.build();
     }
 
-    @Bean
-    JwtDecoder jwtDecoder() {
-        SecretKeySpec secretKeySpec = new SecretKeySpec(signKey.getBytes(), "HS512");
-        return NimbusJwtDecoder.withSecretKey(secretKeySpec)
-                .macAlgorithm(MacAlgorithm.HS512)
-                .build();
-    }
+
 
     @Bean
     JwtAuthenticationConverter jwtAuthenticationConverter() {

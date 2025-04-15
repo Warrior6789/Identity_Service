@@ -3,6 +3,7 @@ package com.philong.identity_service.controller;
 import com.nimbusds.jose.JOSEException;
 import com.philong.identity_service.request.AuthenticationRequest;
 import com.philong.identity_service.request.IntrospectRequest;
+import com.philong.identity_service.request.LogoutRequest;
 import com.philong.identity_service.response.ApiResponse;
 import com.philong.identity_service.response.AuthenticationResponse;
 import com.philong.identity_service.response.IntrospectResponse;
@@ -40,6 +41,13 @@ public class AuthenticationController {
         // result: {
         // authenticated: true hoặc false
         // }
+    }
+
+    @PostMapping("/logout")
+    ApiResponse<Void> authenticate(@RequestBody LogoutRequest request) {
+        authenticationService.Logout(request);
+        ApiResponse<Void> api = new ApiResponse<>();
+        return api;
     }
 
     @PostMapping("/introspect")

@@ -7,6 +7,7 @@ import com.philong.identity_service.response.ApiResponse;
 import com.philong.identity_service.response.UserResponse;
 import com.philong.identity_service.service.UserService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -52,13 +53,13 @@ public class UserController {
         return apiResponse;
     }
     @PostMapping
-    private ApiResponse<UserResponse> addUser(@RequestBody UserCreationRequest request){
+    private ApiResponse<UserResponse> addUser(@Valid @RequestBody UserCreationRequest request){
         ApiResponse<UserResponse> apiResponse = new ApiResponse<>();
         apiResponse.setResult(userService.addUser(request));
         return apiResponse;
     }
     @PutMapping("/{id}")
-    private ApiResponse<UserResponse> updateUser(@RequestBody UserUpdateRequest request, @PathVariable String id){
+    private ApiResponse<UserResponse> updateUser(@Valid @RequestBody UserUpdateRequest request, @PathVariable String id){
         ApiResponse<UserResponse> apiResponse = new ApiResponse<>();
         apiResponse.setResult(userService.updateUser(request,id));
         return apiResponse;

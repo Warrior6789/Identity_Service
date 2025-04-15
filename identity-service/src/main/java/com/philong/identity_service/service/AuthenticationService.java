@@ -5,12 +5,15 @@ import com.nimbusds.jose.crypto.MACSigner;
 import com.nimbusds.jose.crypto.MACVerifier;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
+import com.philong.identity_service.entity.InvalidatedToken;
 import com.philong.identity_service.entity.User;
 import com.philong.identity_service.exception.AppException;
 import com.philong.identity_service.exception.Error;
+import com.philong.identity_service.repository.InvalidatedTokenRepository;
 import com.philong.identity_service.repository.UserRepository;
 import com.philong.identity_service.request.AuthenticationRequest;
 import com.philong.identity_service.request.IntrospectRequest;
+import com.philong.identity_service.request.LogoutRequest;
 import com.philong.identity_service.response.AuthenticationResponse;
 import com.philong.identity_service.response.IntrospectResponse;
 import lombok.AccessLevel;
@@ -29,6 +32,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.StringJoiner;
+import java.util.UUID;
 
 @Slf4j
 @Service
@@ -40,6 +44,7 @@ public class AuthenticationService implements IAuthenticationService {
     private String signKey;
 
     UserRepository userRepository;
+    InvalidatedTokenRepository invalidatedTokenRepository;
 
 
     @Override
@@ -63,19 +68,59 @@ public class AuthenticationService implements IAuthenticationService {
     @Override
     public IntrospectResponse introspect(IntrospectRequest request) throws JOSEException, ParseException {
         JWSVerifier verify = new MACVerifier(signKey.getBytes());
-
-        SignedJWT signedJwt = SignedJWT.parse(request.getToken());// chứa các thành phần của token
-
-        Date expiryTime = signedJwt.getJWTClaimsSet().getExpirationTime();
-
-        var verified = signedJwt.verify(verify); // .verify kiểm tra chữ ký
+        boolean isValid = true;
+        try{
+            verifyToken(request.getToken()); // throw error if invalid
+        }catch(AppException e){
+            isValid = false;
+        }
+        // .verify kiểm tra chữ ký
         // method verify sẽ lấy header và payload
         // sd thuật toán HMAC và khóa bí mật mà t cấp cho MACverifier để tính lại chữ ký
         // sau đó so sánh hai chữ ký
 
         return IntrospectResponse.builder()
-                .valid(verified && expiryTime.after(new Date()))
+                .valid(isValid)
                 .build();
+    }
+
+    @Override
+    public void Logout(LogoutRequest request){
+        try {
+            var signToken = verifyToken(request.getToken());
+
+            String jit = signToken.getJWTClaimsSet().getJWTID();
+            Date expiryDate = signToken.getJWTClaimsSet().getExpirationTime();
+
+            invalidatedTokenRepository.save(InvalidatedToken.builder().id(jit).expiryTime(expiryDate).build());
+
+        } catch (ParseException | JOSEException e){
+            log.error(e.getMessage());
+        }
+    }
+
+    private SignedJWT verifyToken(String token) throws JOSEException, ParseException {
+
+        JWSVerifier verify = new MACVerifier(signKey.getBytes()); // chịu trách nhiệm xác thực chữ ký
+
+        SignedJWT signedJwt = SignedJWT.parse(token);
+
+        Date expiryTime = signedJwt.getJWTClaimsSet().getExpirationTime();
+
+        var verified = signedJwt.verify(verify); // method verify sd jwsVerifier để thực hiện:
+        // lấy header và payload của signedjwt
+
+        if(!(verified && expiryTime.after(new Date()))) {
+            throw new AppException(Error.UNAUTHENTICATED);
+        }
+
+        // kiểm tra trong db
+        if(invalidatedTokenRepository.existsById(signedJwt.getJWTClaimsSet().getJWTID())){
+            throw new AppException(Error.UNAUTHENTICATED);
+        }
+
+
+        return signedJwt;
     }
 
     private String generateToken(User user){
@@ -87,7 +132,7 @@ public class AuthenticationService implements IAuthenticationService {
                 .issueTime(new Date()) // chỉ định thời điểm mà token được phát hành
                 .expirationTime(new Date(Instant.now().plus(1,ChronoUnit.HOURS).toEpochMilli()))
                 //
-
+                .jwtID(UUID.randomUUID().toString())
                 .claim("scope",buildScope(user))
                 .build();
         Payload payload = new Payload(jwtClaimSet.toJSONObject()); // chuyển đổi jwtClaims thành json
