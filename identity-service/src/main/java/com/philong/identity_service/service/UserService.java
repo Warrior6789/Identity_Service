@@ -13,6 +13,7 @@ import com.philong.identity_service.response.UserResponse;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.prepost.PostAuthorize;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -23,6 +24,7 @@ import org.springframework.stereotype.Service;
 import java.util.HashSet;
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
@@ -88,6 +90,7 @@ public class UserService implements IUserService {
     public UserResponse getMyInfo() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         var username = authentication.getName();
+        log.warn(username);
         User user = userRepository.findByUsername(username).orElseThrow(() -> new AppException(Error.USER_NOT_EXIST));
         return userMapper.toUserResponse(user);
     }

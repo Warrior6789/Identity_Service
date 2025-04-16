@@ -14,6 +14,7 @@ import com.philong.identity_service.repository.UserRepository;
 import com.philong.identity_service.request.AuthenticationRequest;
 import com.philong.identity_service.request.IntrospectRequest;
 import com.philong.identity_service.request.LogoutRequest;
+import com.philong.identity_service.request.RefreshRequest;
 import com.philong.identity_service.response.AuthenticationResponse;
 import com.philong.identity_service.response.IntrospectResponse;
 import lombok.AccessLevel;
@@ -42,6 +43,13 @@ public class AuthenticationService implements IAuthenticationService {
     @NonFinal
     @Value("${security.jwt.signkey}")
     private String signKey;
+    @NonFinal
+    @Value("${invalid.duration}")
+    private long invalid_duration;
+    @NonFinal
+    @Value("${refreshable.duration}")
+    private long refreshable_duration;
+
 
     UserRepository userRepository;
     InvalidatedTokenRepository invalidatedTokenRepository;
@@ -67,10 +75,10 @@ public class AuthenticationService implements IAuthenticationService {
 
     @Override
     public IntrospectResponse introspect(IntrospectRequest request) throws JOSEException, ParseException {
-        JWSVerifier verify = new MACVerifier(signKey.getBytes());
+
         boolean isValid = true;
         try{
-            verifyToken(request.getToken()); // throw error if invalid
+            var sign = verifyToken(false,request.getToken()); // throw error if invalid
         }catch(AppException e){
             isValid = false;
         }
@@ -87,7 +95,7 @@ public class AuthenticationService implements IAuthenticationService {
     @Override
     public void Logout(LogoutRequest request){
         try {
-            var signToken = verifyToken(request.getToken());
+            var signToken = verifyToken(true,request.getToken());
 
             String jit = signToken.getJWTClaimsSet().getJWTID();
             Date expiryDate = signToken.getJWTClaimsSet().getExpirationTime();
@@ -99,13 +107,41 @@ public class AuthenticationService implements IAuthenticationService {
         }
     }
 
-    private SignedJWT verifyToken(String token) throws JOSEException, ParseException {
+    @Override
+    public AuthenticationResponse refreshToken(RefreshRequest request) throws ParseException, JOSEException {
+            boolean isValid = true;
 
+            var signToken = verifyToken(true,request.getToken());
+
+            String jit = signToken.getJWTClaimsSet().getJWTID();
+            Date expiryDate = signToken.getJWTClaimsSet().getExpirationTime();
+
+            invalidatedTokenRepository.save(InvalidatedToken.builder().id(jit).expiryTime(expiryDate).build());
+
+            var userName = signToken.getJWTClaimsSet().getSubject();
+            log.warn("info username to find: "+userName);
+
+            var user = userRepository.findByUsername(userName).orElseThrow(() -> new AppException(
+                    Error.USER_NOT_EXIST
+            ));
+
+            var token = generateToken(user);
+
+            return AuthenticationResponse.builder()
+                    .token(token)
+                    .authenticated(isValid)
+                    .build();
+
+
+    }
+
+    private SignedJWT verifyToken(boolean isRefresh,String token) throws JOSEException, ParseException {
         JWSVerifier verify = new MACVerifier(signKey.getBytes()); // chịu trách nhiệm xác thực chữ ký
 
         SignedJWT signedJwt = SignedJWT.parse(token);
 
-        Date expiryTime = signedJwt.getJWTClaimsSet().getExpirationTime();
+        Date expiryTime = (isRefresh) ? new Date(signedJwt.getJWTClaimsSet().getIssueTime().toInstant().plus(refreshable_duration,ChronoUnit.SECONDS).toEpochMilli())
+        :signedJwt.getJWTClaimsSet().getExpirationTime();
 
         var verified = signedJwt.verify(verify); // method verify sd jwsVerifier để thực hiện:
         // lấy header và payload của signedjwt
@@ -130,7 +166,7 @@ public class AuthenticationService implements IAuthenticationService {
                 .subject(user.getUsername()) // dùng để định danh thực thể mà token này đại diện
                 .issuer("identity_service") // phát hành
                 .issueTime(new Date()) // chỉ định thời điểm mà token được phát hành
-                .expirationTime(new Date(Instant.now().plus(1,ChronoUnit.HOURS).toEpochMilli()))
+                .expirationTime(new Date(Instant.now().plus(invalid_duration,ChronoUnit.SECONDS).toEpochMilli()))
                 //
                 .jwtID(UUID.randomUUID().toString())
                 .claim("scope",buildScope(user))
@@ -163,6 +199,7 @@ public class AuthenticationService implements IAuthenticationService {
         log.warn(builder.toString());
         return builder.toString();
     }
+
 }
 
 //Stringjoiner là class của java 8, nằm trong java.util, nó được sd để xây dựng 1 chuỗi ký tự

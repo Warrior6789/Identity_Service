@@ -1,5 +1,7 @@
 package com.philong.identity_service.config;
 
+import lombok.AccessLevel;
+import lombok.experimental.FieldDefaults;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -21,14 +23,17 @@ import javax.crypto.spec.SecretKeySpec;
 
 @Configuration
 @EnableMethodSecurity
+@FieldDefaults(level = AccessLevel.PRIVATE)
 public class SecurityConfig {
 
     @Autowired
-    private CustomJwtDecoder jwtDecoder;
+    CustomJwtDecoder jwtDecoder;
 
+private String signKey;
     private final String[] PUBLIC_ENDPOINTS = {
             "/api/v1/auth/log-in",
             "/api/v1/auth/logout",
+            "/api/v1/auth/refresh",
             "/api/v1/auth/introspect",
 
     };
@@ -48,7 +53,6 @@ public class SecurityConfig {
         });
         return httpSecurity.build();
     }
-
 
 
     @Bean
